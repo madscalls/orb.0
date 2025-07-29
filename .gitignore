@@ -1,0 +1,18 @@
+.DS_Store
+# Ignore everything outside this project
+../*
+../../*
+../../../*
+
+# Ignore OS & editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Ignore VSCode settings
+.vscode/
+
+# Node, Python, etc. (only if used)
+node_modules/
+.env
+*.log
