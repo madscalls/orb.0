@@ -124,7 +124,7 @@
 }
 
 .canvas {
-  perspective: 800px;
+  perspective: 400px;
   inset: 0;
   z-index: 200;
   position: absolute;

@@ -14,6 +14,3 @@ Going forward I am planning to implement a day and night option on the "menu" bu
 
 The buttons will showcase other pages- possibly other voids.
 ![preview of first draft "Orb."](./images/orb.0.gif) "Orb. V0"
-# orb.0
-# orb.0
-# orb.0
