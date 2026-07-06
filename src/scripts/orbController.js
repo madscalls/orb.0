@@ -243,7 +243,10 @@ export function setupRadialMenu() {
     }
 
     if (action === "color") {
-      colorPickerController?.open();
+      const buttonRect = button.getBoundingClientRect();
+      const buttonX = buttonRect.left + buttonRect.width / 2;
+      const buttonY = buttonRect.top;
+      colorPickerController?.open(buttonX, buttonY);
     }
 
     if (action === "shape") {

@@ -168,14 +168,12 @@
 }
 
 .orb-modal__box {
-  position: relative;
+  position: fixed;
   background: white;
-  padding: 50px;
+  padding: 24px;
   border-radius: 20px;
   min-width: 260px;
   pointer-events: all;
-  top: 25%;
-  left: 25%;
 }
 
 .orb-modal__close {
