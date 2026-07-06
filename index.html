@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Lacquer&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="./pages/index.css" />
+    <link rel="stylesheet" href="./src/pages/index.css" />
   </head>
   <body>
     <header>
@@ -24,21 +24,19 @@
           />
         </div>
         <div class="nav__menu">
-          <button type="button" class="nav__button">WHO</button>
-          <button type="button" class="nav__button">WHAT</button>
-          <button type="button" class="nav__button">WHEN</button>
-          <button type="button" class="nav__button">WHERE</button>
-        </div>
+          <label class="nav__button-switch">
+            <input type="checkbox" class="nav__switch" />
+            <span class="nav__slider"></span>
+          </label>
+         
       </nav>
     </header>
     <div class="page">
       <main>
         <section class="orb__section">
-          <div class="orb">
-            <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-          </div>
+          <div class="orb"></div>
         </section>
-        <section class="orb__menu-container">
+        <!-- <section class="orb__menu-container">
           <div class="orb__menu">
             <div class="container noselect">
               <div class="canvas">
@@ -67,24 +65,75 @@
                 <div class="tracker tr-23"></div>
                 <div class="tracker tr-24"></div>
                 <div class="tracker tr-25"></div>
-                <div id="card">
-                  <p id="prompt">
-                    <img
-                      src="./images/settings.svg"
-                      alt="settings"
-                      class="orb__menu-settings"
-                    />
-                  </p>
-                  <div class="title">MENU</div>
-                  <div class="subtitle">2025 MTC</div>
-                </div>
+                <div id="card"></div>
               </div>
             </div>
           </div>
-        </section>
+        </section> -->
       </main>
     </div>
-    <footer></footer>
-    <script src="./scripts/index.js"></script>
+    <div class="orb-radial orb-radial_hidden"><button class="orb-radial__button orb-radial__close" data-action="close">
+  ×
+</button>
+      <button class="orb-radial__button" data-action="color">
+        <img
+          src="/src/assets/images/palette.svg"
+          alt="color"
+          class="radial__img"
+        />
+      </button>
+      <button class="orb-radial__button" data-action="sparkle">
+        <img
+          src="/src/assets/images/stars.svg"
+          alt="sparkle"
+          class="radial__img"
+        />
+      </button>
+      <button class="orb-radial__button" data-action="material">
+        <img
+          src="/src/assets/images/gears.svg"
+          alt="gears"
+          class="radial__img"
+        />
+      </button>
+      <button class="orb-radial__button" data-action="shape">
+        <img src="/src/assets/images/shape.svg" alt="Shape" class="radial__img" />
+      </button>
+    </div>
+    <div class="orb-modal orb-modal_hidden">
+  <div class="orb-modal__box">
+    <button class="orb-modal__close"> X </button>
+
+    <div class="orb-gradient">
+      <div class="orb-gradient__bar" data-gradient-bar></div>
+
+      <div class="orb-gradient__controls">
+        <input type="range" class="orb-gradient__pos" data-pos-slider min="0" max="100" value="0" />
+        <span class="orb-gradient__pos-out" data-pos-out>0%</span>
+        <button class="orb-gradient__add" data-add-stop aria-label="Add stop">+</button>
+        <button class="orb-gradient__remove" data-remove-stop aria-label="Remove stop">&times;</button>
+      </div>
+
+      <div class="orb-gradient__satval" data-satval>
+        <div class="orb-gradient__sv-thumb" data-sv-thumb></div>
+      </div>
+
+      <div class="orb-gradient__hue" data-hue>
+        <div class="orb-gradient__hue-thumb" data-hue-thumb></div>
+      </div>
+
+      <div class="orb-gradient__hex-row">
+        <div class="orb-gradient__swatch" data-swatch></div>
+        <div class="orb-gradient__hex-field">
+          <span>#</span>
+          <input type="text" class="orb-gradient__hex-input" data-hex-input maxlength="6" /><button class="orb-gradient__submit" data-apply-gradient>
+  Apply Gradient
+</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <script type="module" src="./src/scripts/index.js"></script>
   </body>
 </html>
