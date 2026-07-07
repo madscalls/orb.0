@@ -1,13 +1,13 @@
-import { defineConfig } from 'vite'
+import { defineConfig } from "vite";
 
 export default defineConfig({
-  base: '/orb.0/',
+  base: "/orb.0/",
   build: {
-    outDir: 'dist',
+    outDir: "dist",
     rollupOptions: {
       input: {
-        main: './index.html',
+        main: "./index.html",
       },
     },
   },
-})
+});
