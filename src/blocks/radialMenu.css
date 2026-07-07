@@ -1,0 +1,111 @@
+/* ===========================
+   Radial Menu
+=========================== */
+
+.orb-radial {
+  position: fixed;
+  width: 140px;
+  height: 140px;
+  z-index: 9999;
+
+  pointer-events: none;
+
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+
+  transform: scale(1);
+}
+
+.orb-radial_hidden {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.orb-radial:not(.orb-radial_hidden) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.orb-radial__close {
+  left: 46px;
+  top: 46px;
+  background: rgba(255, 255, 255, 0.75);
+  font-size: 22px;
+}
+
+.orb-radial__button {
+  position: absolute;
+
+  width: 48px;
+  height: 48px;
+
+  border: none;
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  cursor: pointer;
+  pointer-events: auto;
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background 0.18s ease;
+}
+
+.orb-radial__button:hover {
+  transform: scale(1.12);
+
+  background: white;
+
+  box-shadow:
+    0 16px 30px rgba(0, 0, 0, 0.22),
+    0 0 18px rgba(127, 119, 221, 0.28);
+}
+
+.radial__img {
+  width: 24px;
+  height: 24px;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Top */
+
+.orb-radial__button:nth-child(1) {
+  left: 46px;
+  top: 0;
+}
+
+/* Right */
+
+.orb-radial__button:nth-child(2) {
+  right: 0;
+  top: 46px;
+}
+
+/* Bottom */
+
+.orb-radial__button:nth-child(3) {
+  left: 46px;
+  bottom: 0;
+}
+
+/* Left */
+
+.orb-radial__button:nth-child(4) {
+  left: 0;
+  top: 46px;
+}
