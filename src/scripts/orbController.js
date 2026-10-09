@@ -17,6 +17,15 @@ import {
   disposeMaterial,
 } from "./materials.js";
 import { createTrail } from "./trail.js";
+import { physics, setupSettingsModal } from "./settings.js";
+import {
+  pickProp,
+  beginPropDrag,
+  movePropDrag,
+  endPropDrag,
+  setPropColor,
+  propLabel,
+} from "./props/propsController.js";
 import { createGlowTrail } from "./glowTrail.js";
 
 import { createSmoothOrb } from "./shapes/smoothOrb.js";
@@ -29,7 +38,6 @@ import { createBlobOrb } from "./shapes/blobOrb.js";
 // time, so the orb moves at the same speed on 60Hz, 120Hz and slow devices.
 
 const GRAVITY = -0.02;
-const BOUNCE = 0.7;
 const WALL_BOUNCE = 0.75;
 const GROUND_FRICTION = 0.985;
 const CUBE_FRICTION = 0.9;
@@ -42,6 +50,8 @@ const DRIVE_ACCEL = 0.009; // push per frame on the ground
 const AIR_CONTROL = 0.35; // fraction of that push while airborne
 const DRIVE_FRICTION = 0.955; // grip while a key is held (same for every shape)
 const MAX_DRIVE_SPEED = 0.2;
+// A heavier orb comes out of a throw slower.
+const throwScale = () => 1 / Math.sqrt(physics.weight);
 const JUMP_SPEED = 0.34;
 
 // ---------- state ----------
@@ -78,6 +88,8 @@ let glowTrail = null;
 const keys = new Set();
 let jumpQueued = false;
 let colorPickerController = null;
+let colorTarget = null; // null = the orb, otherwise a prop
+let settingsModal = null;
 let radial = null;
 let radialOpenedAt = 0;
 let toastEl = null;
@@ -190,12 +202,13 @@ export function updateOrbColor(value) {
   applyAppearance();
 }
 
-function cycleMaterial() {
-  const current = presetKey ?? visual?.userData.defaultPreset ?? "glossy";
-  const next = PRESET_ORDER[(PRESET_ORDER.indexOf(current) + 1) % PRESET_ORDER.length];
-  presetKey = next;
+function currentFinish() {
+  return presetKey ?? visual?.userData.defaultPreset ?? "glossy";
+}
+
+function setFinish(key) {
+  presetKey = key;
   applyAppearance();
-  showToast(PRESETS[next].label);
 }
 
 // ---------- extents (how far the shape reaches along each world axis) ----------
@@ -265,7 +278,7 @@ export function updateOrb(dt, elapsed, nightFactor) {
     settling = false;
   } else {
     applyDriving(k);
-    velocity.y += GRAVITY * k;
+    velocity.y += GRAVITY * physics.gravity * k;
     pos.addScaledVector(velocity, k);
   }
 
@@ -281,8 +294,8 @@ export function updateOrb(dt, elapsed, nightFactor) {
 
     if (!grabbed && velocity.y < 0) {
       const impact = -velocity.y;
-      if (impact > REST_SPEED) {
-        velocity.y = impact * BOUNCE;
+      if (impact > REST_SPEED * Math.sqrt(physics.gravity)) {
+        velocity.y = impact * physics.bounce;
         data.onImpact?.(normals.floor, impact);
       } else {
         velocity.y = 0;
@@ -290,7 +303,8 @@ export function updateOrb(dt, elapsed, nightFactor) {
     }
 
     if (!grabbed && jumpQueued) {
-      velocity.y = JUMP_SPEED;
+      // Heavier orbs jump lower; lower gravity jumps the same height-ish.
+      velocity.y = (JUMP_SPEED * Math.sqrt(physics.gravity)) / Math.sqrt(physics.weight);
       data.onImpact?.(normals.floor, 0.12); // little squish on take-off
     }
 
@@ -426,14 +440,18 @@ function applyDriving(k) {
 
   // Camera looks straight down -z, so screen "up" is -z.
   const len = Math.hypot(x, z);
-  const push = DRIVE_ACCEL * (grounded ? 1 : AIR_CONTROL) * k;
+  const push =
+    ((DRIVE_ACCEL * physics.speed) / Math.sqrt(physics.weight)) *
+    (grounded ? 1 : AIR_CONTROL) *
+    k;
   velocity.x += (x / len) * push;
   velocity.z += (z / len) * push;
 
+  const maxSpeed = MAX_DRIVE_SPEED * physics.speed;
   const planar = Math.hypot(velocity.x, velocity.z);
-  if (planar > MAX_DRIVE_SPEED) {
-    velocity.x *= MAX_DRIVE_SPEED / planar;
-    velocity.z *= MAX_DRIVE_SPEED / planar;
+  if (planar > maxSpeed) {
+    velocity.x *= maxSpeed / planar;
+    velocity.z *= maxSpeed / planar;
   }
   settling = false;
 }
@@ -490,6 +508,15 @@ export function setupPointerControls() {
     const hit = raycaster.intersectObject(activeOrb, true)[0];
     const nearMiss = !hit && raycaster.ray.distanceToPoint(activeOrb.position) < 0.75;
 
+    // A kitty / lamp / yoyo in front of the orb gets grabbed instead.
+    const propHit = pickProp(raycaster);
+    if (propHit && (!hit || propHit.distance < hit.distance)) {
+      pointer.mode = "prop";
+      beginPropDrag(propHit, raycaster);
+      canvas.classList.add("is-grabbing");
+      return;
+    }
+
     if (hit || nearMiss) {
       pointer.mode = "grab";
       camera.getWorldDirection(tmpV);
@@ -509,7 +536,8 @@ export function setupPointerControls() {
       // Hover cursor feedback (desktop only).
       if (pointer.id === null && activeOrb && e.pointerType === "mouse") {
         setNdc(e);
-        const over = raycaster.intersectObject(activeOrb, true).length > 0;
+        const over =
+          raycaster.intersectObject(activeOrb, true).length > 0 || pickProp(raycaster) !== null;
         canvas.classList.toggle("is-grabbable", over);
       }
       return;
@@ -518,6 +546,10 @@ export function setupPointerControls() {
       pointer.moved,
       Math.hypot(e.clientX - pointer.startX, e.clientY - pointer.startY),
     );
+    if (pointer.mode === "prop") {
+      setNdc(e);
+      movePropDrag(raycaster);
+    }
     if (pointer.mode === "grab") {
       setNdc(e);
       if (raycaster.ray.intersectPlane(grabPlane, hitPoint)) {
@@ -534,13 +566,16 @@ export function setupPointerControls() {
     const duration = e.timeStamp - pointer.startTime;
     const isTap = pointer.moved < 8 && duration < 350;
 
-    if (pointer.mode === "grab") {
+    if (pointer.mode === "prop") {
+      endPropDrag(isTap);
+    } else if (pointer.mode === "grab") {
       if (isTap) {
         // A quick tap on the orb gives it a little hop.
         velocity.set(0, 0.16, 0);
         visual.userData.onImpact?.(normals.floor, 0.08);
       } else {
         // Throw with the speed it was moving when released.
+        velocity.multiplyScalar(throwScale());
         if (velocity.length() > MAX_THROW) velocity.setLength(MAX_THROW);
         velocity.y += 0.03;
       }
@@ -548,7 +583,7 @@ export function setupPointerControls() {
       // Drag on empty space flings the orb that way; a tap makes it hop.
       const dx = (e.clientX - pointer.startX) * 0.008;
       const dz = (e.clientY - pointer.startY) * 0.008;
-      velocity.set(dx, 0.2, dz);
+      velocity.set(dx, 0.2, dz).multiplyScalar(throwScale());
       if (velocity.length() > MAX_THROW) velocity.setLength(MAX_THROW);
       spin.set(dz * 0.25, 0, -dx * 0.25);
       settling = false;
@@ -566,6 +601,17 @@ export function setupPointerControls() {
   // click/tap is always just for playing with the orb.
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
+    // Right-click a kitty / lamp / yoyo to recolor it.
+    setNdc(e);
+    const propHit = pickProp(raycaster);
+    const orbHit = raycaster.intersectObject(activeOrb, true)[0];
+    if (propHit && (!orbHit || propHit.distance < orbHit.distance)) {
+      closeRadial();
+      colorTarget = propHit.prop;
+      colorPickerController?.open(e.clientX, e.clientY);
+      showToast(`${propLabel(propHit.prop)} color`);
+      return;
+    }
     openRadial();
   });
 }
@@ -608,10 +654,11 @@ export function setupRadialMenu() {
 
     if (action === "color") {
       const rect = button.getBoundingClientRect();
+      colorTarget = null;
       colorPickerController?.open(rect.left + rect.width / 2, rect.top);
     }
 
-    if (action === "material") cycleMaterial();
+    if (action === "material") settingsModal?.open();
 
     if (action === "sparkle" && trail) {
       const on = trail.toggle();
@@ -651,7 +698,43 @@ export function setupShapeButtons() {
 // ---------- misc ----------
 
 export function setupColorPickerModal() {
-  colorPickerController = setupColorPicker(updateOrbColor);
+  // One picker, two jobs: the orb or whichever prop was right-clicked.
+  colorPickerController = setupColorPicker((value) => {
+    if (colorTarget) setPropColor(colorTarget, value);
+    else updateOrbColor(value);
+  });
+}
+
+export function setupPhysicsModal() {
+  settingsModal = setupSettingsModal({
+    finishes: PRESET_ORDER.map((key) => ({ key, label: PRESETS[key].label })),
+    getFinish: currentFinish,
+    onFinish: setFinish,
+  });
+}
+
+// What the props need to know to collide with the orb.
+const orbBody = {
+  position: null,
+  velocity,
+  radius: 0.5,
+  mass: 1,
+  kinematic: false,
+  onImpact: null,
+};
+
+export function getOrbBody() {
+  if (!activeOrb) return null;
+  orbBody.position = activeOrb.position;
+  orbBody.radius = visual.userData.radius;
+  orbBody.mass = physics.weight;
+  orbBody.kinematic = pointer.mode === "grab";
+  orbBody.onImpact = visual.userData.onImpact;
+  return orbBody;
+}
+
+export function getOrbPosition() {
+  return activeOrb ? activeOrb.position : new THREE.Vector3();
 }
 
 export function setupTrail() {

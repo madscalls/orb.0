@@ -90,6 +90,14 @@ body.is-night .nav__search::placeholder {
     inset -3px -3px 7px #ffffff;
 }
 
+.nav__trash {
+  margin-left: 0.2rem;
+}
+
+.nav__trash:active {
+  border-color: rgb(250, 3, 180);
+}
+
 .nav__shape:focus-visible {
   outline: 2px solid rgb(250, 3, 180);
   outline-offset: 2px;
@@ -286,5 +294,16 @@ body.is-night .nav__button-switch {
   .nav__shape {
     width: 34px;
     height: 34px;
+  }
+}
+
+/* Very narrow phones: the search box doesn't do anything yet, so it goes. */
+@media (max-width: 430px) {
+  .nav__search-container {
+    display: none;
+  }
+
+  .nav {
+    justify-content: flex-end;
   }
 }

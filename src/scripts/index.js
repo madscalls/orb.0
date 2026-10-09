@@ -16,9 +16,13 @@ import {
   setupTrail,
   setupKeyboardControls,
   setupShapeButtons,
+  setupPhysicsModal,
+  getOrbBody,
+  getOrbPosition,
   showToast,
   updateOrb,
 } from "./orbController.js";
+import { setupProps, updateProps } from "./props/propsController.js";
 import { nightFactor } from "./scene.js";
 
 mountRenderer(".orb");
@@ -42,10 +46,12 @@ setupRadialMenu();
 setupTrail();
 setupKeyboardControls();
 setupShapeButtons();
+setupPhysicsModal();
+setupProps({ toast: showToast, getOrbPosition });
 
 // One-time hint for keyboard users.
 if (window.matchMedia("(pointer: fine)").matches) {
-  setTimeout(() => showToast("arrow keys to drive · space to jump · right-click for menu", 4000), 1200);
+  setTimeout(() => showToast("arrows drive · space jumps · K kitty · L lamp · Y yoyo · right-click for menu", 5000), 1200);
 }
 
 const timer = new THREE.Timer();
@@ -62,6 +68,7 @@ function animate(time) {
   updateLighting(isNight, Math.min(rawDt, 0.25), elapsed);
   scene.environmentIntensity = THREE.MathUtils.lerp(0.6, 0.08, nightFactor);
   updateOrb(dt, elapsed, nightFactor);
+  updateProps(dt, nightFactor, getOrbBody());
 
   render();
 }

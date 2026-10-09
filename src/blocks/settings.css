@@ -1,0 +1,170 @@
+/* Physics settings modal (gears button) */
+
+.orb-settings__box {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(340px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 28px 24px 22px;
+  font-family: "Lacquer", cursive;
+  color: #2f303b;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+}
+
+.orb-settings__box .orb-modal__close {
+  left: auto;
+  right: 14px;
+  top: 12px;
+  color: #777;
+}
+
+.orb-settings__title {
+  margin: 0 0 18px;
+  font-size: 24px;
+  font-weight: normal;
+  letter-spacing: 0.03em;
+}
+
+.orb-settings__subtitle {
+  margin: 20px 0 10px;
+  font-size: 17px;
+  font-weight: normal;
+}
+
+.orb-settings__sliders {
+  display: grid;
+  gap: 14px;
+}
+
+.orb-settings__row {
+  display: grid;
+  grid-template-columns: 70px 1fr 66px;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+}
+
+.orb-settings__value {
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  color: #777;
+  text-align: right;
+}
+
+.orb-settings__row input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 99px;
+  background: linear-gradient(
+    to right,
+    rgb(65, 88, 208) 0%,
+    rgb(200, 80, 192) var(--fill, 50%),
+    #e4e4ea var(--fill, 50%)
+  );
+  outline: none;
+  cursor: pointer;
+}
+
+.orb-settings__row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgb(200, 80, 192);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.orb-settings__row input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid rgb(200, 80, 192);
+}
+
+.orb-settings__row input[type="range"]:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid rgb(250, 3, 180);
+  outline-offset: 2px;
+}
+
+.orb-settings__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.orb-settings__chip {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 99px;
+  border: 2px solid #e4e4ea;
+  background: #f6f6f9;
+  color: #2f303b;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+
+.orb-settings__chip:hover {
+  border-color: #c8c8d4;
+}
+
+.orb-settings__chip.is-active {
+  border-color: rgb(250, 3, 180);
+  background: #fff;
+}
+
+.orb-settings__reset {
+  margin-top: 20px;
+  width: 100%;
+  height: 38px;
+  border: none;
+  border-radius: 10px;
+  background: #2f303b;
+  color: white;
+  font-family: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.orb-settings__reset:hover {
+  background: #44465a;
+}
+
+/* Night */
+body.is-night .orb-settings__box {
+  background: #12131f;
+  color: #e3e5ff;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(150, 160, 255, 0.15);
+}
+
+body.is-night .orb-settings__row input[type="range"] {
+  background: linear-gradient(
+    to right,
+    rgb(65, 88, 208) 0%,
+    rgb(200, 80, 192) var(--fill, 50%),
+    #2a2c40 var(--fill, 50%)
+  );
+}
+
+body.is-night .orb-settings__chip {
+  background: #1b1d2c;
+  border-color: #2a2c40;
+  color: #e3e5ff;
+}
+
+body.is-night .orb-settings__chip.is-active {
+  border-color: #9aa2ff;
+}
+
+body.is-night .orb-settings__reset {
+  background: #2a2c40;
+}
