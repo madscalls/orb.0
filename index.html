@@ -26,10 +26,15 @@
         </div>
         <div class="nav__menu">
           <label class="nav__button-switch">
-            <input type="checkbox" class="nav__switch" />
+            <input
+              type="checkbox"
+              class="nav__switch"
+              aria-label="Night mode"
+              title="Day / night"
+            />
             <span class="nav__slider"></span>
           </label>
-         
+        </div>
       </nav>
     </header>
     <div class="page">
@@ -73,34 +78,40 @@
         </section> -->
       </main>
     </div>
-    <div class="orb-radial orb-radial_hidden"><button class="orb-radial__button orb-radial__close" data-action="close">
-  ×
-</button>
-      <button class="orb-radial__button" data-action="color">
+    <div class="orb-radial orb-radial_hidden">
+      <button class="orb-radial__button" data-action="color" title="Color">
         <img
           src="./src/assets/images/palette.svg"
           alt="color"
           class="radial__img"
         />
       </button>
-      <button class="orb-radial__button" data-action="sparkle">
+      <button class="orb-radial__button" data-action="sparkle" title="Sparkle trail">
         <img
           src="./src/assets/images/stars.svg"
           alt="sparkle"
           class="radial__img"
         />
       </button>
-      <button class="orb-radial__button" data-action="material">
+      <button class="orb-radial__button" data-action="material" title="Material">
         <img
           src="./src/assets/images/gears.svg"
           alt="gears"
           class="radial__img"
         />
       </button>
-      <button class="orb-radial__button" data-action="shape">
+      <button class="orb-radial__button" data-action="shape" title="Shape">
         <img src="./src/assets/images/shape.svg" alt="Shape" class="radial__img" />
       </button>
+      <button
+        class="orb-radial__button orb-radial__close"
+        data-action="close"
+        aria-label="Close menu"
+      >
+        &times;
+      </button>
     </div>
+    <div class="orb-toast" role="status" aria-live="polite"></div>
     <div class="orb-modal orb-modal_hidden">
   <div class="orb-modal__box">
     <button class="orb-modal__close"> X </button>

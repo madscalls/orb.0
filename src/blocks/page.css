@@ -1,4 +1,43 @@
 body {
   font-family: "Lacquer", cursive;
   background-color: rgb(255, 255, 255);
+  margin: 0;
+  overflow: hidden; /* the canvas fills the screen; nothing should scroll */
+  overscroll-behavior: none;
+  transition: background-color 1.2s ease;
+}
+
+body.is-night {
+  background-color: #02020a;
+}
+
+/* Little status message (shape / material / sparkle changes). */
+.orb-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  transform: translate(-50%, 12px);
+  padding: 0.45em 1.1em;
+  border-radius: 999px;
+  background: rgba(20, 20, 30, 0.82);
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  z-index: 10000;
+}
+
+.orb-toast_visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+body.is-night .orb-toast {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 24px rgba(140, 150, 255, 0.25);
 }

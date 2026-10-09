@@ -1,9 +1,21 @@
-.orb__section {
-  background-color: white;
+/* The 3D canvas sits behind everything and fills the screen. */
+.orb {
+  position: fixed;
+  inset: 0;
 }
 
-.orb {
-  background-color: white;
+.orb canvas {
+  display: block;
+  touch-action: none; /* lets us handle drags on phones without the page scrolling */
+  cursor: default;
+}
+
+.orb canvas.is-grabbable {
+  cursor: grab;
+}
+
+.orb canvas.is-grabbing {
+  cursor: grabbing;
 }
 
 .orb__menu-container {

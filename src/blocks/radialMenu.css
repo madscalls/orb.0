@@ -4,8 +4,8 @@
 
 .orb-radial {
   position: fixed;
-  width: 140px;
-  height: 140px;
+  width: 150px;
+  height: 150px;
   z-index: 9999;
 
   pointer-events: none;
@@ -21,6 +21,17 @@
   opacity: 0;
   transform: scale(0.8);
   pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0s linear 0.2s;
+}
+
+/* The buttons opt back into pointer events, so switch them off explicitly
+   when hidden — otherwise the invisible menu swallows taps on the orb. */
+.orb-radial_hidden .orb-radial__button {
+  pointer-events: none;
 }
 
 .orb-radial:not(.orb-radial_hidden) {
@@ -28,12 +39,7 @@
   transform: scale(1);
 }
 
-.orb-radial__close {
-  left: 46px;
-  top: 46px;
-  background: rgba(255, 255, 255, 0.75);
-  font-size: 22px;
-}
+
 
 .orb-radial__button {
   position: absolute;
@@ -83,29 +89,60 @@
 }
 
 /* Top */
-
 .orb-radial__button:nth-child(1) {
-  left: 46px;
+  left: 51px;
   top: 0;
 }
 
 /* Right */
-
 .orb-radial__button:nth-child(2) {
   right: 0;
-  top: 46px;
+  top: 51px;
 }
 
 /* Bottom */
-
 .orb-radial__button:nth-child(3) {
-  left: 46px;
+  left: 51px;
   bottom: 0;
 }
 
 /* Left */
-
 .orb-radial__button:nth-child(4) {
   left: 0;
-  top: 46px;
+  top: 51px;
+}
+
+/* Center: close */
+.orb-radial__button.orb-radial__close {
+  left: 59px;
+  top: 59px;
+  width: 32px;
+  height: 32px;
+  font-size: 20px;
+  line-height: 1;
+  color: #555;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.orb-radial__button.is-active {
+  box-shadow:
+    0 10px 25px rgba(0, 0, 0, 0.18),
+    0 0 0 2px rgba(127, 119, 221, 0.9),
+    0 0 16px rgba(127, 119, 221, 0.6);
+}
+
+/* Night */
+body.is-night .orb-radial__button {
+  background: rgba(30, 32, 60, 0.75);
+  box-shadow:
+    0 0 18px rgba(140, 150, 255, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+body.is-night .orb-radial__button .radial__img {
+  filter: invert(1) brightness(1.4);
+}
+
+body.is-night .orb-radial__close {
+  color: #dfe2ff;
 }

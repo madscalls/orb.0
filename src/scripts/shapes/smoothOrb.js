@@ -1,15 +1,14 @@
 import * as THREE from "three";
 
-export function createSmoothOrb(color) {
-  const material = new THREE.MeshStandardMaterial({
-    color,
-    roughness: 0.25,
-    metalness: 0.15,
-  });
+export function createSmoothOrb() {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64));
 
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.5, 64, 64), material);
-
-  mesh.userData.shape = "smooth";
+  mesh.userData = {
+    shape: "smooth",
+    radius: 0.5,
+    defaultPreset: "glossy",
+    rollFactor: 1,
+  };
 
   return mesh;
 }

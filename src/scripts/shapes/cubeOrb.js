@@ -1,15 +1,18 @@
 import * as THREE from "three";
+import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 
-export function createCubeOrb(color) {
-  const material = new THREE.MeshStandardMaterial({
-    color,
-    roughness: 0.35,
-    metalness: 0.12,
-  });
+export function createCubeOrb() {
+  // Slightly rounded edges catch the light much better than a hard box.
+  const mesh = new THREE.Mesh(new RoundedBoxGeometry(0.9, 0.9, 0.9, 4, 0.06));
 
-  const mesh = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.9, 0.9), material);
-
-  mesh.userData.shape = "cube";
+  mesh.userData = {
+    shape: "cube",
+    radius: 0.45,
+    halfSize: new THREE.Vector3(0.45, 0.45, 0.45),
+    boxy: true,
+    defaultPreset: "glossy",
+    rollFactor: 0.55,
+  };
 
   return mesh;
 }

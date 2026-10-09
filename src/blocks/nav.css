@@ -1,12 +1,38 @@
 .nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.5rem;
+  gap: 1rem;
+  padding: 0.5rem 0.75rem;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
   font-size: 20px;
   font-family: "Lacquer", cursive;
-  background-color: #f3f3f3;
+  background-color: rgba(243, 243, 243, 0.7);
+  backdrop-filter: blur(10px);
   color: #333;
+  transition:
+    background-color 1.2s ease,
+    color 1.2s ease;
+}
+
+body.is-night .nav {
+  background-color: rgba(8, 8, 20, 0.35);
+  color: #dfe2ff;
+}
+
+body.is-night .nav__search {
+  background-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0.4rem rgba(0, 0, 0, 0.4);
+  color: #e8e8ff;
+}
+
+body.is-night .nav__search::placeholder {
+  color: #c9ccff;
 }
 
 .nav__menu {
@@ -60,7 +86,7 @@
   padding: 1rem;
   margin-left: auto;
   font-size: 1rem;
-  width: 15em;
+  width: min(15em, 55vw);
   border-radius: 1rem;
   color: rgb(78, 4, 57);
   box-shadow: 0 0.4rem #dfd9d9;
@@ -157,4 +183,20 @@ input:hover:checked + .nav__slider:before {
   transform: translateX(calc(var(--switch_width) - var(--switch_height)))
     translateY(-0.3em);
   box-shadow: 0 0.3em 0 var(--outline_color);
+}
+
+/* Night: the thumb becomes a glowing moon */
+.nav__button-switch {
+  --track_active_color: #1c1f4a;
+}
+
+input:checked + .nav__slider:before {
+  background-color: #f4f1ff;
+  box-shadow:
+    0 0.2em 0 var(--outline_color),
+    0 0 10px 2px rgba(170, 180, 255, 0.85);
+}
+
+body.is-night .nav__button-switch {
+  --outline_color: #9aa2ff;
 }
