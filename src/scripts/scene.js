@@ -203,7 +203,7 @@ export function updateLighting(isNight, dt, elapsed) {
 
   bloomPass.strength = 0.95 * n;
   // Keep the threshold high mid-transition so the grey background never blooms.
-  bloomPass.threshold = 1 - 0.75 * n * n;
+  bloomPass.threshold = 1 - 0.62 * n * n; // 0.38 at night: the orb blooms, stars don't
   bloomPass.enabled = n > 0.01;
 }
 

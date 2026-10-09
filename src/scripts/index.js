@@ -14,6 +14,9 @@ import {
   setupColorPickerModal,
   setupRadialMenu,
   setupTrail,
+  setupKeyboardControls,
+  setupShapeButtons,
+  showToast,
   updateOrb,
 } from "./orbController.js";
 import { nightFactor } from "./scene.js";
@@ -37,6 +40,13 @@ setupPointerControls();
 setupColorPickerModal();
 setupRadialMenu();
 setupTrail();
+setupKeyboardControls();
+setupShapeButtons();
+
+// One-time hint for keyboard users.
+if (window.matchMedia("(pointer: fine)").matches) {
+  setTimeout(() => showToast("arrow keys to drive · space to jump · right-click for menu", 4000), 1200);
+}
 
 const timer = new THREE.Timer();
 timer.connect(document); // pauses cleanly when the tab is hidden

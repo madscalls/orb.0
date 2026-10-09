@@ -94,22 +94,16 @@
   top: 0;
 }
 
-/* Right */
+/* Bottom right */
 .orb-radial__button:nth-child(2) {
-  right: 0;
-  top: 51px;
+  right: 4px;
+  bottom: 12px;
 }
 
-/* Bottom */
+/* Bottom left */
 .orb-radial__button:nth-child(3) {
-  left: 51px;
-  bottom: 0;
-}
-
-/* Left */
-.orb-radial__button:nth-child(4) {
-  left: 0;
-  top: 51px;
+  left: 4px;
+  bottom: 12px;
 }
 
 /* Center: close */

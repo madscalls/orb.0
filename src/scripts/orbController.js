@@ -17,6 +17,7 @@ import {
   disposeMaterial,
 } from "./materials.js";
 import { createTrail } from "./trail.js";
+import { createGlowTrail } from "./glowTrail.js";
 
 import { createSmoothOrb } from "./shapes/smoothOrb.js";
 import { createCubeOrb } from "./shapes/cubeOrb.js";
@@ -36,6 +37,13 @@ const AIR_SPIN_DAMPING = 0.995;
 const REST_SPEED = 0.04; // impacts slower than this stop instead of bouncing
 const MAX_THROW = 0.55;
 
+// Driving with the arrow keys / WASD.
+const DRIVE_ACCEL = 0.009; // push per frame on the ground
+const AIR_CONTROL = 0.35; // fraction of that push while airborne
+const DRIVE_FRICTION = 0.955; // grip while a key is held (same for every shape)
+const MAX_DRIVE_SPEED = 0.2;
+const JUMP_SPEED = 0.34;
+
 // ---------- state ----------
 
 const shapeFactories = {
@@ -44,7 +52,6 @@ const shapeFactories = {
   chaotic: createChaosOrb,
   blob: createBlobOrb,
 };
-const shapeOrder = ["smooth", "cube", "chaotic", "blob"];
 const shapeLabels = {
   smooth: "orb",
   cube: "cube",
@@ -54,7 +61,6 @@ const shapeLabels = {
 
 let activeOrb = null; // Group: position lives here
 let visual = null; // Mesh: rotation / shape live here
-let shapeIndex = 0;
 let loadToken = 0;
 
 let appearance = { color: "#4158d0" };
@@ -68,6 +74,9 @@ let grounded = false;
 let settling = false;
 
 let trail = null;
+let glowTrail = null;
+const keys = new Set();
+let jumpQueued = false;
 let colorPickerController = null;
 let radial = null;
 let radialOpenedAt = 0;
@@ -140,8 +149,13 @@ export async function setShape(shape) {
   else activeOrb.position.set(0, 1.2, 0);
 
   scene.add(activeOrb);
+  glowTrail?.reset(activeOrb.position);
 
-  shapeIndex = shapeOrder.indexOf(shape);
+  document.querySelectorAll("[data-shape]").forEach((button) => {
+    const active = button.dataset.shape === shape;
+    button.classList.toggle("nav__shape_active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
   velocity.set(0, 0, 0);
   spin.set(0, 0, 0);
   settling = false;
@@ -250,6 +264,7 @@ export function updateOrb(dt, elapsed, nightFactor) {
     spin.multiplyScalar(Math.pow(0.9, k));
     settling = false;
   } else {
+    applyDriving(k);
     velocity.y += GRAVITY * k;
     pos.addScaledVector(velocity, k);
   }
@@ -274,8 +289,18 @@ export function updateOrb(dt, elapsed, nightFactor) {
       }
     }
 
+    if (!grabbed && jumpQueued) {
+      velocity.y = JUMP_SPEED;
+      data.onImpact?.(normals.floor, 0.12); // little squish on take-off
+    }
+
     if (!grabbed) {
-      const f = Math.pow(isCube ? CUBE_FRICTION : GROUND_FRICTION, k);
+      const baseFriction = isDriving()
+        ? DRIVE_FRICTION
+        : isCube
+          ? CUBE_FRICTION
+          : GROUND_FRICTION;
+      const f = Math.pow(baseFriction, k);
       velocity.x *= f;
       velocity.z *= f;
       if (Math.hypot(velocity.x, velocity.z) < 0.0008) {
@@ -316,6 +341,8 @@ export function updateOrb(dt, elapsed, nightFactor) {
     }
   }
 
+  jumpQueued = false;
+
   data.tick?.(dt, elapsed, velocity, grabbed);
 
   // ---- glow ----
@@ -333,8 +360,17 @@ export function updateOrb(dt, elapsed, nightFactor) {
   glowPool.position.z = pos.z;
   glowPool.scale.setScalar(1 + height * 0.35);
   glowPool.material.color.copy(glowColor);
-  glowPool.material.opacity = (0.5 * nightFactor) / (1 + height * 0.9);
+  glowPool.material.opacity = (0.3 * nightFactor) / (1 + height * 0.9);
 
+  glowTrail?.update(
+    elapsed,
+    pos,
+    height,
+    data.radius,
+    glowColor,
+    nightFactor,
+    renderer.domElement.height,
+  );
   trail?.update(dt, pos, glowColor, nightFactor);
 }
 
@@ -356,6 +392,71 @@ function collideWall(axis, min, max, normalAtMin, normalAtMax, grabbed) {
       visual.userData.onImpact?.(normalAtMax, impact);
     }
   }
+}
+
+// ---------- input: driving with the keyboard ----------
+
+const DRIVE_KEYS = {
+  ArrowUp: [0, -1],
+  KeyW: [0, -1],
+  ArrowDown: [0, 1],
+  KeyS: [0, 1],
+  ArrowLeft: [-1, 0],
+  KeyA: [-1, 0],
+  ArrowRight: [1, 0],
+  KeyD: [1, 0],
+};
+
+function isDriving() {
+  for (const code of keys) if (DRIVE_KEYS[code]) return true;
+  return false;
+}
+
+function applyDriving(k) {
+  let x = 0;
+  let z = 0;
+  for (const code of keys) {
+    const dir = DRIVE_KEYS[code];
+    if (dir) {
+      x += dir[0];
+      z += dir[1];
+    }
+  }
+  if (x === 0 && z === 0) return;
+
+  // Camera looks straight down -z, so screen "up" is -z.
+  const len = Math.hypot(x, z);
+  const push = DRIVE_ACCEL * (grounded ? 1 : AIR_CONTROL) * k;
+  velocity.x += (x / len) * push;
+  velocity.z += (z / len) * push;
+
+  const planar = Math.hypot(velocity.x, velocity.z);
+  if (planar > MAX_DRIVE_SPEED) {
+    velocity.x *= MAX_DRIVE_SPEED / planar;
+    velocity.z *= MAX_DRIVE_SPEED / planar;
+  }
+  settling = false;
+}
+
+function isTyping(target) {
+  return target?.closest?.("input, textarea, [contenteditable]");
+}
+
+export function setupKeyboardControls() {
+  window.addEventListener("keydown", (e) => {
+    if (isTyping(e.target)) return;
+    if (DRIVE_KEYS[e.code]) {
+      keys.add(e.code);
+      e.preventDefault();
+    }
+    if (e.code === "Space") {
+      if (!e.repeat && grounded) jumpQueued = true;
+      e.preventDefault();
+    }
+  });
+  window.addEventListener("keyup", (e) => keys.delete(e.code));
+  // Don't keep driving if the window loses focus mid-press.
+  window.addEventListener("blur", () => keys.clear());
 }
 
 // ---------- input: grab & throw (mouse + touch via pointer events) ----------
@@ -435,7 +536,9 @@ export function setupPointerControls() {
 
     if (pointer.mode === "grab") {
       if (isTap) {
-        openRadial();
+        // A quick tap on the orb gives it a little hop.
+        velocity.set(0, 0.16, 0);
+        visual.userData.onImpact?.(normals.floor, 0.08);
       } else {
         // Throw with the speed it was moving when released.
         if (velocity.length() > MAX_THROW) velocity.setLength(MAX_THROW);
@@ -459,7 +562,8 @@ export function setupPointerControls() {
   canvas.addEventListener("pointerup", end);
   canvas.addEventListener("pointercancel", end);
 
-  // Desktop shortcut: right-click opens the menu too.
+  // Right-click (or long-press on most phones) opens the menu, so a normal
+  // click/tap is always just for playing with the orb.
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
     openRadial();
@@ -507,12 +611,6 @@ export function setupRadialMenu() {
       colorPickerController?.open(rect.left + rect.width / 2, rect.top);
     }
 
-    if (action === "shape") {
-      const next = shapeOrder[(shapeIndex + 1) % shapeOrder.length];
-      setShape(next);
-      showToast(shapeLabels[next]);
-    }
-
     if (action === "material") cycleMaterial();
 
     if (action === "sparkle" && trail) {
@@ -538,6 +636,18 @@ export function setupRadialMenu() {
   });
 }
 
+// ---------- shape buttons (top bar) ----------
+
+export function setupShapeButtons() {
+  document.querySelectorAll("[data-shape]").forEach((button) => {
+    button.addEventListener("click", () => {
+      setShape(button.dataset.shape);
+      // Drop focus so Space (jump) doesn't re-press the button.
+      button.blur();
+    });
+  });
+}
+
 // ---------- misc ----------
 
 export function setupColorPickerModal() {
@@ -546,13 +656,14 @@ export function setupColorPickerModal() {
 
 export function setupTrail() {
   trail = createTrail(scene);
+  glowTrail = createGlowTrail(scene);
 }
 
-export function showToast(text) {
+export function showToast(text, duration = 1300) {
   toastEl ??= document.querySelector(".orb-toast");
   if (!toastEl) return;
   toastEl.textContent = text;
   toastEl.classList.add("orb-toast_visible");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toastEl.classList.remove("orb-toast_visible"), 1300);
+  toastTimer = setTimeout(() => toastEl.classList.remove("orb-toast_visible"), duration);
 }

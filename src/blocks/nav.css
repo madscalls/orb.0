@@ -37,8 +37,75 @@ body.is-night .nav__search::placeholder {
 
 .nav__menu {
   display: flex;
+  align-items: center;
   gap: 1rem;
 }
+
+/* ---- shape picker ---- */
+
+.nav__shapes {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.nav__shape {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid transparent;
+  border-radius: 0.6em;
+  background: #e8e8e8;
+  color: #0a4258;
+  cursor: pointer;
+  box-shadow:
+    3px 3px 7px #c5c5c5,
+    -3px -3px 7px #ffffff;
+  transition:
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 1.2s ease,
+    color 1.2s ease;
+}
+
+.nav__shape-icon {
+  width: 22px;
+  height: 22px;
+  fill: currentColor;
+  pointer-events: none;
+}
+
+.nav__shape:hover {
+  box-shadow:
+    4px 4px 9px #c5c5c5,
+    -4px -4px 9px #ffffff;
+}
+
+.nav__shape_active {
+  border-color: rgb(250, 3, 180);
+  box-shadow:
+    inset 3px 3px 7px #c5c5c5,
+    inset -3px -3px 7px #ffffff;
+}
+
+.nav__shape:focus-visible {
+  outline: 2px solid rgb(250, 3, 180);
+  outline-offset: 2px;
+}
+
+body.is-night .nav__shape {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c9ccff;
+  box-shadow: none;
+}
+
+body.is-night .nav__shape_active {
+  border-color: #9aa2ff;
+  box-shadow: 0 0 12px rgba(140, 150, 255, 0.45);
+}
+
 
 .nav__search-container {
   display: flex;
@@ -199,4 +266,25 @@ input:checked + .nav__slider:before {
 
 body.is-night .nav__button-switch {
   --outline_color: #9aa2ff;
+}
+
+/* Small screens (kept last so it overrides the rules above) */
+@media (max-width: 560px) {
+  .nav__search {
+    width: 26vw;
+    padding: 0.8rem;
+  }
+
+  .nav__menu {
+    gap: 0.6rem;
+  }
+
+  .nav__shapes {
+    gap: 0.3rem;
+  }
+
+  .nav__shape {
+    width: 34px;
+    height: 34px;
+  }
 }
