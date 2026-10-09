@@ -75,6 +75,9 @@ export function createKitty(mainMaterial) {
     capsule: { a: 0.3, b: 0.62, r: 0.3 },
     mass: Infinity, // the orb can't push it around (but you can drag it)
     preset: "matte",
+    onTap(ctx) {
+      ctx.toast("meow");
+    },
     dispose() {
       eyeMat.dispose();
       shineMat.dispose();

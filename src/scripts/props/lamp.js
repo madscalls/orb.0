@@ -83,7 +83,8 @@ export function createLamp(mainMaterial, light) {
       tiltVel.x += dir.z * strength * 2.2;
       tiltVel.y += -dir.x * strength * 2.2;
     },
-    tick(dt, nightFactor) {
+    tick(dt, ctx) {
+      const nightFactor = ctx.nightFactor;
       const k = 60 * dt;
       tiltVel.x += (-tilt.x * 0.06 - tiltVel.x * 0.12) * k;
       tiltVel.y += (-tilt.y * 0.06 - tiltVel.y * 0.12) * k;

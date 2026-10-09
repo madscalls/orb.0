@@ -94,6 +94,12 @@ body.is-night .nav__search::placeholder {
   margin-left: 0.2rem;
 }
 
+.nav__help {
+  font-family: system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
 .nav__trash:active {
   border-color: rgb(250, 3, 180);
 }

@@ -80,6 +80,10 @@ export function createOctopus(mainMaterial) {
     capsule: { a: 0.3, b: 0.62, r: 0.33 },
     mass: 1.2,
     preset: "glossy",
+    onTap(ctx, prop) {
+      excitement = 1;
+      prop.velocity.y = 0.15;
+    },
     nudge(_dir, strength) {
       excitement = Math.min(1, excitement + strength * 4);
     },

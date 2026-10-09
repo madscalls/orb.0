@@ -62,11 +62,69 @@ export function createYoyo(mainMaterial) {
     return REST;
   }
 
+  const tmp = new THREE.Vector3();
+
   return {
     group,
     main,
     anchor,
     string,
+    extras: [anchor, string],
+    nearFront: true,
+    spawnAt(ctx) {
+      const spot = ctx.randomSpot(true);
+      anchor.position.set(spot.x, 2.6, spot.z);
+      return spot.set(spot.x, 2.3, spot.z);
+    },
+    onTap(_ctx, prop) {
+      prop.yo();
+    },
+    physics(dt, ctx, prop, drag) {
+      const k = dt * 60;
+      const dragged = drag.prop === prop;
+      const body = group.position;
+      if (dragged && drag.part === "anchor") {
+        anchor.position.lerp(drag.target, 1 - Math.exp(-dt * 25));
+      }
+      if (dragged && drag.part === "body") {
+        tmp.copy(body);
+        body.lerp(drag.target, 1 - Math.exp(-dt * 25));
+        prop.velocity.subVectors(body, tmp).divideScalar(Math.max(k, 1e-4));
+        // Pulling the yoyo past the string drags the ring along.
+        tmp.subVectors(anchor.position, body);
+        if (tmp.length() > length) {
+          tmp.setLength(length);
+          anchor.position.addVectors(body, tmp);
+          anchor.position.y = Math.max(anchor.position.y, 0.6);
+        }
+      } else {
+        prop.velocity.y += ctx.gravity() * k;
+        prop.velocity.multiplyScalar(Math.pow(0.995, k)); // air drag
+        body.addScaledVector(prop.velocity, k);
+        // String: can go slack, but never longer than its length.
+        tmp.subVectors(body, anchor.position);
+        const dist = tmp.length();
+        if (dist > length) {
+          tmp.divideScalar(dist);
+          body.copy(anchor.position).addScaledVector(tmp, length);
+          const radial = prop.velocity.dot(tmp);
+          if (radial > 0) prop.velocity.addScaledVector(tmp, -radial);
+        }
+      }
+      // floor + walls
+      if (body.y < 0.2) {
+        body.y = 0.2;
+        if (prop.velocity.y < 0) prop.velocity.y = 0;
+        prop.velocity.x *= Math.pow(0.9, k);
+        prop.velocity.z *= Math.pow(0.9, k);
+      }
+      const b = ctx.bounds;
+      body.x = THREE.MathUtils.clamp(body.x, b.minX + 0.2, b.maxX - 0.2);
+      body.z = THREE.MathUtils.clamp(body.z, b.minZ + 0.2, b.maxZ - 0.2);
+      anchor.rotation.y += dt * 0.6;
+    },
+    allowPush: true,
+    keepRotation: true,
     capsule: { a: 0, b: 0, r: 0.2, centered: true },
     mass: 0.6,
     preset: "glossy",
@@ -76,7 +134,6 @@ export function createYoyo(mainMaterial) {
     yo() {
       if (throwTime < 0) throwTime = 0;
     },
-    // returns how fast the string length changed (for spin)
     tick(dt) {
       let dL = 0;
       if (throwTime >= 0) {
@@ -88,12 +145,10 @@ export function createYoyo(mainMaterial) {
       }
       // Unwinding spins one way, winding back the other.
       halves.rotation.z -= dL / 0.035;
-      // A little idle spin that slows down.
       const pts = stringGeometry.attributes.position;
       pts.setXYZ(0, anchor.position.x, anchor.position.y, anchor.position.z);
       pts.setXYZ(1, group.position.x, group.position.y, group.position.z);
       pts.needsUpdate = true;
-      return dL;
     },
     dispose() {
       axleMat.dispose();

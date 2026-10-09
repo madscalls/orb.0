@@ -18,6 +18,7 @@ import {
 } from "./materials.js";
 import { createTrail } from "./trail.js";
 import { physics, setupSettingsModal } from "./settings.js";
+import { orbStatus, isSlipping, isAsleep } from "./orbStatus.js";
 import {
   pickProp,
   beginPropDrag,
@@ -266,6 +267,9 @@ export function updateOrb(dt, elapsed, nightFactor) {
 
   prevPos.copy(pos);
   updateExtents();
+  orbStatus.now = elapsed;
+  const slipping = isSlipping();
+  const asleep = isAsleep();
 
   if (grabbed) {
     // Follow the pointer smoothly; velocity comes from how fast it moved.
@@ -277,8 +281,15 @@ export function updateOrb(dt, elapsed, nightFactor) {
     spin.multiplyScalar(Math.pow(0.9, k));
     settling = false;
   } else {
-    applyDriving(k);
-    velocity.y += GRAVITY * physics.gravity * k;
+    if (!asleep) applyDriving(k, slipping);
+    // A UFO beam cancels gravity (and then some) while it holds the orb.
+    velocity.y += GRAVITY * physics.gravity * (1 - orbStatus.beam) * k;
+    if (asleep) {
+      // Dozing: slows right down wherever it is.
+      const damp = Math.pow(0.85, k);
+      velocity.x *= damp;
+      velocity.z *= damp;
+    }
     pos.addScaledVector(velocity, k);
   }
 
@@ -302,18 +313,20 @@ export function updateOrb(dt, elapsed, nightFactor) {
       }
     }
 
-    if (!grabbed && jumpQueued) {
+    if (!grabbed && jumpQueued && !asleep) {
       // Heavier orbs jump lower; lower gravity jumps the same height-ish.
       velocity.y = (JUMP_SPEED * Math.sqrt(physics.gravity)) / Math.sqrt(physics.weight);
       data.onImpact?.(normals.floor, 0.12); // little squish on take-off
     }
 
     if (!grabbed) {
-      const baseFriction = isDriving()
-        ? DRIVE_FRICTION
-        : isCube
-          ? CUBE_FRICTION
-          : GROUND_FRICTION;
+      const baseFriction = slipping
+        ? 0.999 // no grip at all
+        : isDriving()
+          ? DRIVE_FRICTION
+          : isCube
+            ? CUBE_FRICTION
+            : GROUND_FRICTION;
       const f = Math.pow(baseFriction, k);
       velocity.x *= f;
       velocity.z *= f;
@@ -327,7 +340,12 @@ export function updateOrb(dt, elapsed, nightFactor) {
   // ---- rotation ----
   const planarSpeed = Math.hypot(velocity.x, velocity.z);
 
-  if (grounded && !grabbed) {
+  if (slipping && grounded && !grabbed) {
+    // Skidding: the spin goes haywire instead of matching the motion.
+    spin.x += (Math.random() - 0.5) * 0.04 * k;
+    spin.z += (Math.random() - 0.5) * 0.04 * k;
+    spin.y += 0.02 * k;
+  } else if (grounded && !grabbed) {
     // Roll without slipping: spin axis = up × velocity, rate = speed / radius.
     tmpV.set(velocity.z, 0, -velocity.x).divideScalar(data.radius);
     tmpV.multiplyScalar(data.rollFactor);
@@ -426,7 +444,7 @@ function isDriving() {
   return false;
 }
 
-function applyDriving(k) {
+function applyDriving(k, slipping = false) {
   let x = 0;
   let z = 0;
   for (const code of keys) {
@@ -443,6 +461,7 @@ function applyDriving(k) {
   const push =
     ((DRIVE_ACCEL * physics.speed) / Math.sqrt(physics.weight)) *
     (grounded ? 1 : AIR_CONTROL) *
+    (slipping ? 0.15 : 1) *
     k;
   velocity.x += (x / len) * push;
   velocity.z += (z / len) * push;

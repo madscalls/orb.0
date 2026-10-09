@@ -168,3 +168,88 @@ body.is-night .orb-settings__chip.is-active {
 body.is-night .orb-settings__reset {
   background: #2a2c40;
 }
+
+/* ---------- help card ("?") ---------- */
+
+.orb-help__box {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.orb-help__title {
+  margin: 0 0 10px;
+  font-size: 24px;
+  font-weight: normal;
+}
+
+.orb-help__subtitle {
+  margin: 14px 0 8px;
+  font-size: 17px;
+  font-weight: normal;
+}
+
+.orb-help__line {
+  margin: 6px 0;
+  font-family: system-ui, sans-serif;
+  font-size: 13px;
+  color: #6b6d7c;
+  line-height: 1.7;
+}
+
+.orb-help__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 6px 12px;
+}
+
+.orb-help__grid li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+}
+
+.orb-help__box kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  margin: 0 2px;
+  box-sizing: border-box;
+  border-radius: 6px;
+  border: 1px solid #d9d9e3;
+  border-bottom-width: 3px;
+  background: #fafafc;
+  color: #2f303b;
+  font-family: system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.orb-help__sound {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.orb-help__sound input {
+  accent-color: rgb(200, 80, 192);
+  width: 16px;
+  height: 16px;
+}
+
+body.is-night .orb-help__line {
+  color: #9aa0d0;
+}
+
+body.is-night .orb-help__box kbd {
+  background: #1b1d2c;
+  border-color: #2f3250;
+  color: #e3e5ff;
+}
