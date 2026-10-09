@@ -608,8 +608,7 @@ export function setupPointerControls() {
     if (propHit && (!orbHit || propHit.distance < orbHit.distance)) {
       closeRadial();
       colorTarget = propHit.prop;
-      colorPickerController?.open(e.clientX, e.clientY);
-      showToast(`${propLabel(propHit.prop)} color`);
+      colorPickerController?.open(propLabel(propHit.prop));
       return;
     }
     openRadial();
@@ -653,9 +652,8 @@ export function setupRadialMenu() {
     const action = button.dataset.action;
 
     if (action === "color") {
-      const rect = button.getBoundingClientRect();
       colorTarget = null;
-      colorPickerController?.open(rect.left + rect.width / 2, rect.top);
+      colorPickerController?.open(shapeLabels[visual?.userData.shape] ?? "orb");
     }
 
     if (action === "material") settingsModal?.open();

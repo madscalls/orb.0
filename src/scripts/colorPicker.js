@@ -1,286 +1,157 @@
-export function setupColorPicker(
-  updateColor,
-  initialStops = [
-    { stop: 0, color: "1b2a4a" },
-    { stop: 0.5, color: "7f77dd" },
-    { stop: 1, color: "1bc17a" },
-  ],
-) {
-  const modal = document.querySelector(".orb-modal");
-  const closeModal = document.querySelector(".orb-modal__close");
-  const gradientBar = document.querySelector("[data-gradient-bar]");
-  const posSlider = document.querySelector("[data-pos-slider]");
-  const posOut = document.querySelector("[data-pos-out]");
-  const addBtn = document.querySelector("[data-add-stop]");
-  const removeBtn = document.querySelector("[data-remove-stop]");
-  const svBox = document.querySelector("[data-satval]");
-  const svThumb = document.querySelector("[data-sv-thumb]");
-  const hueBox = document.querySelector("[data-hue]");
-  const hueThumb = document.querySelector("[data-hue-thumb]");
-  const swatch = document.querySelector("[data-swatch]");
-  const hexInput = document.querySelector("[data-hex-input]");
-  const applyBtn = document.querySelector("[data-apply-gradient]");
+// Color picker for the orb and the dropped-in items.
+// Everything applies instantly — tap a swatch and you see it, no "apply" step.
+//   solid:    a row of plain colors (ROYGBP + black + white) and a custom one
+//   gradient: a few ready-made blends, or pick your own two colors
 
-  let stops = initialStops.map((s, i) => ({ id: i + 1, ...s }));
-  let nextId = stops.length + 1;
-  let selectedId = stops[0].id;
+export const SOLIDS = [
+  { name: "red", hex: "#e53935" },
+  { name: "orange", hex: "#fb8c00" },
+  { name: "yellow", hex: "#fdd835" },
+  { name: "green", hex: "#43a047" },
+  { name: "blue", hex: "#1e63e9" },
+  { name: "purple", hex: "#8e24aa" },
+  { name: "black", hex: "#16161c" },
+  { name: "white", hex: "#f7f7f7" },
+];
 
-  // ---- color math ----
-  function hexToRgb(hex) {
-    return [
-      parseInt(hex.substr(0, 2), 16),
-      parseInt(hex.substr(2, 2), 16),
-      parseInt(hex.substr(4, 2), 16),
-    ];
-  }
-  function rgbToHex(r, g, b) {
-    const h = (x) =>
-      Math.round(Math.max(0, Math.min(255, x)))
-        .toString(16)
-        .padStart(2, "0");
-    return (h(r) + h(g) + h(b)).toUpperCase();
-  }
-  function lerpHex(a, b, t) {
-    const [r1, g1, b1] = hexToRgb(a);
-    const [r2, g2, b2] = hexToRgb(b);
-    return rgbToHex(r1 + (r2 - r1) * t, g1 + (g2 - g1) * t, b1 + (b2 - b1) * t);
-  }
-  function hsvToHex(h, s, v) {
-    s /= 100;
-    v /= 100;
-    const k = (n) => (n + h / 60) % 6;
-    const f = (n) => v - v * s * Math.max(0, Math.min(k(n), 4 - k(n), 1));
-    const t = (x) =>
-      Math.round(x * 255)
-        .toString(16)
-        .padStart(2, "0");
-    return (t(f(5)) + t(f(3)) + t(f(1))).toUpperCase();
-  }
-  function hexToHsv(hex) {
-    let [r, g, b] = hexToRgb(hex).map((x) => x / 255);
-    const max = Math.max(r, g, b),
-      min = Math.min(r, g, b),
-      d = max - min;
-    let h = 0;
-    if (d !== 0) {
-      if (max === r) h = ((g - b) / d) % 6;
-      else if (max === g) h = (b - r) / d + 2;
-      else h = (r - g) / d + 4;
-      h *= 60;
-      if (h < 0) h += 360;
-    }
-    const s = max === 0 ? 0 : d / max;
-    return [h, s * 100, max * 100];
+const GRADIENTS = [
+  { name: "sunset", colors: ["ff5f6d", "ffc371"] },
+  { name: "ocean", colors: ["2193b0", "6dd5ed"] },
+  { name: "aurora", colors: ["1b2a4a", "7f77dd", "1bc17a"] },
+  { name: "candy", colors: ["f7797d", "c471ed", "12c2e9"] },
+  { name: "ember", colors: ["f12711", "f5af19"] },
+  { name: "galaxy", colors: ["0f0c29", "302b63", "b06ab3"] },
+];
+
+const toStops = (colors) =>
+  colors.map((color, i) => ({ stop: colors.length === 1 ? 0 : i / (colors.length - 1), color }));
+
+const css = (colors) =>
+  `linear-gradient(135deg, ${colors.map((c) => `#${c}`).join(", ")})`;
+
+/**
+ * onChange(value): value is "#rrggbb" for a solid color, or an array of
+ * { stop, color } for a gradient.
+ */
+export function setupColorPicker(onChange) {
+  const modal = document.createElement("div");
+  modal.className = "orb-modal orb-modal_hidden orb-color";
+  modal.innerHTML = `
+    <div class="orb-modal__box orb-color__box" role="dialog" aria-modal="true" aria-label="Color">
+      <button class="orb-modal__close" aria-label="Close">&times;</button>
+      <h2 class="orb-color__title" data-title>color</h2>
+
+      <div class="orb-color__tabs" role="tablist">
+        <button class="orb-color__tab is-active" data-tab="solid" role="tab">solid</button>
+        <button class="orb-color__tab" data-tab="gradient" role="tab">gradient</button>
+      </div>
+
+      <div class="orb-color__panel" data-panel="solid">
+        <div class="orb-color__swatches">
+          ${SOLIDS.map(
+            (s) => `<button class="orb-color__swatch" style="--c:${s.hex}" data-solid="${s.hex}"
+                      title="${s.name}" aria-label="${s.name}"></button>`,
+          ).join("")}
+          <label class="orb-color__swatch orb-color__swatch_custom" title="custom" aria-label="custom color">
+            <input type="color" data-custom value="#4158d0" />
+          </label>
+        </div>
+      </div>
+
+      <div class="orb-color__panel" data-panel="gradient" hidden>
+        <div class="orb-color__gradients">
+          ${GRADIENTS.map(
+            (g, i) => `<button class="orb-color__gradient" style="background:${css(g.colors)}"
+                         data-gradient="${i}" title="${g.name}">
+                         <span>${g.name}</span></button>`,
+          ).join("")}
+        </div>
+        <div class="orb-color__mix">
+          <span>your own</span>
+          <input type="color" data-from value="#4158d0" aria-label="gradient start" />
+          <div class="orb-color__mix-preview" data-mix-preview></div>
+          <input type="color" data-to value="#c850c0" aria-label="gradient end" />
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const title = modal.querySelector("[data-title]");
+  const swatches = [...modal.querySelectorAll("[data-solid]")];
+  const gradients = [...modal.querySelectorAll("[data-gradient]")];
+  const custom = modal.querySelector("[data-custom]");
+  const from = modal.querySelector("[data-from]");
+  const to = modal.querySelector("[data-to]");
+  const mixPreview = modal.querySelector("[data-mix-preview]");
+
+  function markActive(el) {
+    [...swatches, ...gradients, custom.parentElement].forEach((s) =>
+      s.classList.toggle("is-active", s === el),
+    );
   }
 
-  // ---- state helpers ----
-  const sortedStops = () => [...stops].sort((a, b) => a.stop - b.stop);
-  const selected = () => stops.find((s) => s.id === selectedId);
-  const gradientCSS = () =>
-    "linear-gradient(to right, " +
-    sortedStops()
-      .map((s) => `#${s.color} ${s.stop * 100}%`)
-      .join(", ") +
-    ")";
-
-  // ---- rendering ----
-  function renderMarkers() {
-    gradientBar
-      .querySelectorAll(".orb-gradient__stop")
-      .forEach((m) => m.remove());
-    stops.forEach((s) => {
-      const marker = document.createElement("button");
-      marker.className =
-        "orb-gradient__stop" +
-        (s.id === selectedId ? " orb-gradient__stop_selected" : "");
-      marker.style.left = `${s.stop * 100}%`;
-      marker.style.background = `#${s.color}`;
-      marker.setAttribute(
-        "aria-label",
-        `Color stop at ${Math.round(s.stop * 100)}%`,
-      );
-      marker.addEventListener("mousedown", (e) => startDragMarker(e, s.id));
-      marker.addEventListener("touchstart", (e) => startDragMarker(e, s.id));
-      marker.addEventListener("click", (e) => {
-        e.stopPropagation();
-        selectedId = s.id;
-        render();
-      });
-      gradientBar.appendChild(marker);
+  function showTab(name) {
+    modal.querySelectorAll("[data-tab]").forEach((t) => {
+      const on = t.dataset.tab === name;
+      t.classList.toggle("is-active", on);
+      t.setAttribute("aria-selected", String(on));
+    });
+    modal.querySelectorAll("[data-panel]").forEach((p) => {
+      p.hidden = p.dataset.panel !== name;
     });
   }
-  //CORRECT?
 
-  function render() {
-    gradientBar.style.background = gradientCSS();
-    renderMarkers();
-
-    const sel = selected();
-    const [h, s, v] = hexToHsv(sel.color);
-    svBox.style.background = `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${h},90%,45%))`;
-    svThumb.style.left = `${s}%`;
-    svThumb.style.top = `${100 - v}%`;
-    hueThumb.style.left = `${(h / 360) * 100}%`;
-    hueThumb.style.background = `hsl(${h},90%,45%)`;
-    swatch.style.background = `#${sel.color}`;
-    hexInput.value = sel.color;
-    posSlider.value = Math.round(sel.stop * 100);
-    posOut.textContent = `${Math.round(sel.stop * 100)}%`;
-
-    removeBtn.disabled = stops.length <= 2;
-  }
-
-  // ---- drag helpers ----
-  function dragOnElement(el, onMove) {
-    function move(e) {
-      const rect = el.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      const y = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
-      onMove(x, y);
-    }
-    function down(e) {
-      move(e);
-      const up = () => {
-        document.removeEventListener("mousemove", move);
-        document.removeEventListener("mouseup", up);
-        document.removeEventListener("touchmove", move);
-        document.removeEventListener("touchend", up);
-      };
-      document.addEventListener("mousemove", move);
-      document.addEventListener("mouseup", up);
-      document.addEventListener("touchmove", move);
-      document.addEventListener("touchend", up);
-    }
-    el.addEventListener("mousedown", down);
-    el.addEventListener("touchstart", down);
-  }
-
-  function startDragMarker(e, id) {
-    e.stopPropagation();
-    e.preventDefault();
-    selectedId = id;
-    const rect = gradientBar.getBoundingClientRect();
-    function move(ev) {
-      const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-      const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-      stops.find((s) => s.id === id).stop = x;
-      render();
-    }
-    function up() {
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", up);
-      document.removeEventListener("touchmove", move);
-      document.removeEventListener("touchend", up);
-    }
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", up);
-    document.addEventListener("touchmove", move);
-    document.addEventListener("touchend", up);
-  }
-
-  // ---- interactions ----
-
-  applyBtn.addEventListener("click", () => {
-    updateColor(sortedStops());
-    modal.classList.add("orb-modal_hidden");
-  });
-
-  gradientBar.addEventListener("click", (e) => {
-    const rect = gradientBar.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    const s = sortedStops();
-    let left = s[0],
-      right = s[s.length - 1];
-    for (let i = 0; i < s.length - 1; i++) {
-      if (x >= s[i].stop && x <= s[i + 1].stop) {
-        left = s[i];
-        right = s[i + 1];
-        break;
-      }
-    }
-    const range = right.stop - left.stop;
-    const t = range === 0 ? 0 : (x - left.stop) / range;
-    const newStop = {
-      id: nextId++,
-      stop: x,
-      color: lerpHex(left.color, right.color, t),
-    };
-    stops.push(newStop);
-    selectedId = newStop.id;
-    render();
-  });
-
-  addBtn.addEventListener("click", () => {
-    const s = sortedStops();
-    let bestGap = -1,
-      bestPos = 0.5,
-      bestColor = "ffffff";
-    for (let i = 0; i < s.length - 1; i++) {
-      const gap = s[i + 1].stop - s[i].stop;
-      if (gap > bestGap) {
-        bestGap = gap;
-        bestPos = (s[i].stop + s[i + 1].stop) / 2;
-        bestColor = lerpHex(s[i].color, s[i + 1].color, 0.5);
-      }
-    }
-    const newStop = { id: nextId++, stop: bestPos, color: bestColor };
-    stops.push(newStop);
-    selectedId = newStop.id;
-    render();
-  });
-
-  removeBtn.addEventListener("click", () => {
-    if (stops.length <= 2) return;
-    stops = stops.filter((s) => s.id !== selectedId);
-    selectedId = stops[0].id;
-    render();
-  });
-
-  dragOnElement(svBox, (x, y) => {
-    const [h] = hexToHsv(selected().color);
-    selected().color = hsvToHex(h, x * 100, (1 - y) * 100);
-    render();
-  });
-
-  dragOnElement(hueBox, (x) => {
-    const [, s, v] = hexToHsv(selected().color);
-    selected().color = hsvToHex(x * 360, s, v);
-    render();
-  });
-
-  posSlider.addEventListener("input", () => {
-    selected().stop = posSlider.value / 100;
-    render();
-  });
-
-  hexInput.addEventListener("change", () => {
-    const clean = hexInput.value
-      .replace(/[^0-9a-fA-F]/g, "")
-      .padEnd(6, "0")
-      .slice(0, 6);
-    selected().color = clean;
-    render();
-  });
-
-  closeModal.addEventListener("click", () =>
-    modal.classList.add("orb-modal_hidden"),
+  modal.querySelectorAll("[data-tab]").forEach((t) =>
+    t.addEventListener("click", () => showTab(t.dataset.tab)),
   );
 
-  render();
+  swatches.forEach((s) =>
+    s.addEventListener("click", () => {
+      markActive(s);
+      onChange(s.dataset.solid);
+    }),
+  );
+
+  custom.addEventListener("input", () => {
+    custom.parentElement.style.setProperty("--c", custom.value);
+    markActive(custom.parentElement);
+    onChange(custom.value);
+  });
+
+  gradients.forEach((g) =>
+    g.addEventListener("click", () => {
+      markActive(g);
+      onChange(toStops(GRADIENTS[Number(g.dataset.gradient)].colors));
+    }),
+  );
+
+  function applyMix() {
+    const colors = [from.value.slice(1), to.value.slice(1)];
+    mixPreview.style.background = css(colors);
+    markActive(null);
+    onChange(toStops(colors));
+  }
+  from.addEventListener("input", applyMix);
+  to.addEventListener("input", applyMix);
+  mixPreview.style.background = css([from.value.slice(1), to.value.slice(1)]);
+
+  const close = () => modal.classList.add("orb-modal_hidden");
+  modal.querySelector(".orb-modal__close").addEventListener("click", close);
+  modal.addEventListener("pointerdown", (e) => {
+    if (e.target === modal) close();
+  });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") close();
+  });
 
   return {
-    open: (x, y) => {
+    /** label: what's being colored, e.g. "orb" or "kitty" */
+    open(label = "orb") {
+      title.textContent = `${label} color`;
+      markActive(null);
+      showTab("solid");
       modal.classList.remove("orb-modal_hidden");
-      if (x !== undefined && y !== undefined) {
-        const box = document.querySelector(".orb-modal__box");
-        if (box) {
-          box.style.left = `${Math.max(10, Math.min(x - 160, window.innerWidth - 340))}px`;
-          box.style.top = `${Math.max(10, y - 150)}px`;
-        }
-      }
     },
-    close: () => modal.classList.add("orb-modal_hidden"),
+    close,
   };
 }

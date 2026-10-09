@@ -1,166 +1,10 @@
-.orb-modal__box {
-  width: 320px;
-}
-
-.orb-gradient {
-  text-align: left;
-}
-
-.orb-gradient__bar {
-  position: relative;
-  width: 100%;
-  height: 36px;
-  border-radius: 8px;
-  cursor: copy;
-  margin-bottom: 24px;
-}
-
-.orb-gradient__stop {
-  position: absolute;
-  top: 100%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%);
-  cursor: grab;
-  padding: 0;
-}
-
-.orb-gradient__stop_selected {
-  border-color: #1a1a1a;
-}
-
-.orb-gradient__controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-
-.orb-gradient__pos {
-  flex: 1;
-}
-
-.orb-gradient__pos-out {
-  font-size: 13px;
-  color: #6b6b6b;
-  width: 32px;
-  text-align: right;
-}
-
-.orb-gradient__add,
-.orb-gradient__remove {
-  width: 30px;
-  height: 30px;
-  border: 1px solid #e4e4e4;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
-}
-
-.orb-gradient__remove:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.orb-gradient__satval {
-  position: relative;
-  width: 100%;
-  height: 120px;
-  border-radius: 10px;
-  margin-bottom: 12px;
-  cursor: crosshair;
-}
-
-.orb-gradient__sv-thumb {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.orb-gradient__hue {
-  position: relative;
-  width: 100%;
-  height: 10px;
-  border-radius: 5px;
-  margin-bottom: 16px;
-  cursor: pointer;
-  background: linear-gradient(
-    to right,
-    #ff0000,
-    #ffff00,
-    #00ff00,
-    #00ffff,
-    #0000ff,
-    #ff00ff,
-    #ff0000
-  );
-}
-
-.orb-gradient__hue-thumb {
-  position: absolute;
-  top: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.orb-gradient__hex-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.orb-gradient__swatch {
-  width: 30px;
-  height: 30px;
-  border-radius: 7px;
-  border: 1px solid #e4e4e4;
-  flex-shrink: 0;
-}
-
-.orb-gradient__hex-field {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  border: 1px solid #e4e4e4;
-  border-radius: 8px;
-  height: 34px;
-  padding: 0 10px;
-}
-
-.orb-gradient__hex-field span {
-  color: #9b9b9b;
-  font-size: 14px;
-  margin-right: 2px;
-}
-
-.orb-gradient__hex-input {
-  border: none;
-  outline: none;
-  font-size: 14px;
-  font-family: monospace;
-  width: 100%;
-}
+/* ---------- shared modal shell (color + physics) ---------- */
 
 .orb-modal {
   position: fixed;
   inset: 0;
   z-index: 999;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.3);
 }
 
 .orb-modal.orb-modal_hidden {
@@ -169,42 +13,251 @@
 
 .orb-modal__box {
   position: fixed;
-  background: white;
-  padding: 24px;
-  border-radius: 20px;
-  min-width: 260px;
-  pointer-events: all;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(340px, calc(100vw - 32px));
+  box-sizing: border-box;
   max-height: 90vh;
   overflow-y: auto;
+  padding: 28px 24px 22px;
+  border-radius: 20px;
+  background: white;
+  color: #2f303b;
+  font-family: "Lacquer", cursive;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
 }
 
 .orb-modal__close {
   position: absolute;
-  top: 15px;
-  left: 15px;
+  top: 12px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
   border: none;
+  border-radius: 50%;
   background: none;
-  font-size: 24px;
+  color: #777;
+  font-size: 22px;
+  line-height: 1;
   cursor: pointer;
-  font-size: 18px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.orb_modal__close:hover {
-  background-color: #6b6b6b;
-}
-.orb-gradient__submit {
-  width: 100%;
-  height: 38px;
-  border: none;
-  border-radius: 10px;
-  background: #2f303b;
-  color: white;
-  cursor: pointer;
-  font-weight: 600;
-  margin-top: 16px;
+  transition: background 0.15s ease;
 }
 
-.orb-gradient__submit:hover {
-  background: #333;
+.orb-modal__close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+body.is-night .orb-modal__box {
+  background: #12131f;
+  color: #e3e5ff;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(150, 160, 255, 0.15);
+}
+
+body.is-night .orb-modal__close {
+  color: #aab0e8;
+}
+
+body.is-night .orb-modal__close:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ---------- color picker ---------- */
+
+.orb-color__title {
+  margin: 0 0 14px;
+  font-size: 24px;
+  font-weight: normal;
+  letter-spacing: 0.03em;
+}
+
+.orb-color__tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 16px;
+  border-radius: 99px;
+  background: #f0f0f4;
+}
+
+.orb-color__tab {
+  font-family: inherit;
+  font-size: 15px;
+  padding: 5px 14px;
+  border: none;
+  border-radius: 99px;
+  background: transparent;
+  color: #6b6d7c;
+  cursor: pointer;
+}
+
+.orb-color__tab.is-active {
+  background: #fff;
+  color: #2f303b;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* solid swatches: a row of 8 + custom */
+.orb-color__swatches {
+  display: grid;
+  grid-template-columns: repeat(9, 1fr);
+  gap: 6px;
+}
+
+.orb-color__swatch {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  background: var(--c);
+  cursor: pointer;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.orb-color__swatch:hover {
+  transform: scale(1.12);
+}
+
+.orb-color__swatch.is-active {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px rgb(250, 3, 180);
+}
+
+/* custom = rainbow ring with a "+" until a color is picked */
+.orb-color__swatch_custom {
+  --c: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+  background: var(--c);
+  overflow: hidden;
+}
+
+.orb-color__swatch_custom::after {
+  content: "+";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-family: system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.orb-color__swatch_custom input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* gradients */
+.orb-color__gradients {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.orb-color__gradient {
+  height: 44px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-end;
+  padding: 4px 8px;
+  transition: transform 0.12s ease;
+}
+
+.orb-color__gradient span {
+  font-family: "Lacquer", cursive;
+  font-size: 13px;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.orb-color__gradient:hover {
+  transform: scale(1.04);
+}
+
+.orb-color__gradient.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgb(250, 3, 180);
+}
+
+.orb-color__mix {
+  display: grid;
+  grid-template-columns: auto 34px 1fr 34px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  font-size: 15px;
+}
+
+.orb-color__mix input[type="color"] {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 2px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+
+.orb-color__mix input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.orb-color__mix input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.orb-color__mix input[type="color"]::-moz-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.orb-color__mix-preview {
+  height: 14px;
+  border-radius: 99px;
+}
+
+/* night */
+body.is-night .orb-color__tabs {
+  background: #1b1d2c;
+}
+
+body.is-night .orb-color__tab {
+  color: #8f94c4;
+}
+
+body.is-night .orb-color__tab.is-active {
+  background: #2a2c40;
+  color: #e3e5ff;
+}
+
+body.is-night .orb-color__swatch {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.is-night .orb-color__swatch.is-active {
+  box-shadow:
+    0 0 0 2px #12131f,
+    0 0 0 4px #9aa2ff;
+}
+
+@media (max-width: 400px) {
+  .orb-color__swatches {
+    grid-template-columns: repeat(5, 1fr);
+  }
 }

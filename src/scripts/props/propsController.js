@@ -9,6 +9,7 @@ import { physics } from "../settings.js";
 import { createKitty } from "./kitty.js";
 import { createLamp } from "./lamp.js";
 import { createYoyo } from "./yoyo.js";
+import { createOctopus } from "./octopus.js";
 
 /*
  * Things you can drop into the void with the keyboard (K, L, Y).
@@ -27,9 +28,10 @@ const PALETTES = {
   kitty: ["#f4a259", "#f2f2f2", "#3a3a44", "#c8a27a", "#9aa5b1"],
   lamp: ["#f6e7c1", "#9ec5d9", "#e8a0bf", "#b8d8a8", "#f2c14e"],
   yoyo: ["#e4405f", "#4158d0", "#1bc17a", "#f7b32b", "#7f77dd"],
+  octopus: ["#e85d75", "#8e24aa", "#fb8c00", "#26a69a", "#ec407a"],
 };
 
-const LABELS = { kitty: "kitty", lamp: "lamp", yoyo: "yoyo" };
+const LABELS = { kitty: "kitty", lamp: "lamp", yoyo: "yoyo", octopus: "octopus" };
 
 const props = [];
 const lampLights = []; // fixed pool, so adding a lamp never recompiles shaders
@@ -71,6 +73,7 @@ export function setupProps(options) {
     if (e.code === "KeyK") spawn("kitty");
     if (e.code === "KeyL") spawn("lamp");
     if (e.code === "KeyY") spawn("yoyo");
+    if (e.code === "KeyO") spawn("octopus");
   });
 
   document.querySelector("[data-trash]")?.addEventListener("click", (e) => {
@@ -127,7 +130,9 @@ export function spawn(type) {
       ? createKitty(placeholder)
       : type === "lamp"
         ? createLamp(placeholder, light)
-        : createYoyo(placeholder);
+        : type === "octopus"
+          ? createOctopus(placeholder)
+          : createYoyo(placeholder);
 
   const prop = {
     type,
@@ -269,6 +274,10 @@ export function endPropDrag(isTap) {
   if (isTap) {
     if (prop.type === "yoyo") prop.yo();
     else if (prop.type === "kitty") toast("meow");
+    else if (prop.type === "octopus") {
+      prop.nudge(null, 0.3);
+      prop.velocity.y = 0.15;
+    }
     else prop.velocity.y = 0.12;
     return prop;
   }

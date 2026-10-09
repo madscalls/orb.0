@@ -51,7 +51,7 @@ setupProps({ toast: showToast, getOrbPosition });
 
 // One-time hint for keyboard users.
 if (window.matchMedia("(pointer: fine)").matches) {
-  setTimeout(() => showToast("arrows drive · space jumps · K kitty · L lamp · Y yoyo · right-click for menu", 5000), 1200);
+  setTimeout(() => showToast("arrows drive · space jumps · K kitty · L lamp · Y yoyo · O octopus · right-click for menu", 5000), 1200);
 }
 
 const timer = new THREE.Timer();

@@ -47,8 +47,11 @@ export function createKitty(mainMaterial) {
   add(new THREE.TubeGeometry(tailCurve, 24, 0.045, 10), mainMaterial, 0, 0, 0);
 
   // face
+  const shineMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   for (const side of [-1, 1]) {
     add(new THREE.SphereGeometry(0.034, 16, 12), eyeMat, side * 0.085, 0.73, 0.25, false);
+    // little highlight so the eyes still read on a black kitty
+    add(new THREE.SphereGeometry(0.011, 8, 6), shineMat, side * 0.085 + 0.012, 0.745, 0.28, false);
   }
   add(new THREE.SphereGeometry(0.022, 12, 8), noseMat, 0, 0.665, 0.27, false);
 
@@ -74,6 +77,7 @@ export function createKitty(mainMaterial) {
     preset: "matte",
     dispose() {
       eyeMat.dispose();
+      shineMat.dispose();
       noseMat.dispose();
       whiskerMat.dispose();
     },
