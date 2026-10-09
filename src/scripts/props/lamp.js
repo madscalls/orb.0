@@ -15,6 +15,13 @@ export function createLamp(mainMaterial, light) {
     emissive: 0xffd9a0,
     emissiveIntensity: 1,
   });
+  // Warm glow on the inside of the shade, so it looks lit from within.
+  const innerGlow = new THREE.MeshBasicMaterial({
+    color: 0xffd9a0,
+    side: THREE.BackSide,
+    transparent: true,
+    opacity: 0.35,
+  });
 
   const add = (geometry, material, y, isMain) => {
     const mesh = new THREE.Mesh(geometry, material);
@@ -26,14 +33,37 @@ export function createLamp(mainMaterial, light) {
   };
 
   add(new THREE.CylinderGeometry(0.2, 0.24, 0.06, 40), mainMaterial, 0.03, true);
-  add(new THREE.CylinderGeometry(0.022, 0.022, 1.0, 12), metal, 0.56, false);
-  const shade = add(new THREE.CylinderGeometry(0.13, 0.3, 0.32, 40, 1, true), mainMaterial, 1.14, true);
+  add(new THREE.CylinderGeometry(0.022, 0.022, 1.06, 12), metal, 0.59, false);
+  // Shade: open at the bottom, closed at the top, bulb tucked up inside it.
+  const shade = add(new THREE.CylinderGeometry(0.14, 0.3, 0.34, 40, 1, true), mainMaterial, 1.15, true);
   shade.castShadow = false; // let the light out
-  const bulb = add(new THREE.SphereGeometry(0.075, 20, 16), bulbMat, 1.07, false);
+  const cap = add(new THREE.CircleGeometry(0.14, 40), mainMaterial, 1.32, true);
+  cap.rotation.x = -Math.PI / 2;
+  cap.castShadow = false;
+  // Light shining *through* the fabric: a warm shell just outside the shade
+  // that fades in at night (on top of whatever color the shade is).
+  const throughGlow = new THREE.MeshBasicMaterial({
+    color: 0xffc77a,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
+  const shell = add(new THREE.CylinderGeometry(0.145, 0.305, 0.345, 40, 1, true), throughGlow, 1.15, false);
+  shell.castShadow = false;
+  const shellCap = add(new THREE.CircleGeometry(0.145, 40), throughGlow, 1.322, false);
+  shellCap.rotation.x = -Math.PI / 2;
+  shellCap.castShadow = false;
+  const inner = add(new THREE.CylinderGeometry(0.135, 0.29, 0.33, 40, 1, true), innerGlow, 1.15, false);
+  inner.castShadow = false;
+  // socket on top of the pole, bulb standing up inside the shade
+  add(new THREE.CylinderGeometry(0.032, 0.026, 0.07, 12), metal, 1.14, false).castShadow = false;
+  const bulb = add(new THREE.SphereGeometry(0.062, 20, 16), bulbMat, 1.22, false);
   bulb.castShadow = false;
 
   if (light) {
-    light.position.set(0, 1.05, 0);
+    // At the bulb; the open bottom of the shade lets it spill down and out.
+    light.position.set(0, 1.24, 0);
     pivot.add(light);
   }
 
@@ -44,7 +74,7 @@ export function createLamp(mainMaterial, light) {
   return {
     group,
     main,
-    capsule: { a: 0.25, b: 1.05, r: 0.27 },
+    capsule: { a: 0.25, b: 1.1, r: 0.28 },
     mass: 2,
     preset: "matte",
     light,
@@ -64,11 +94,15 @@ export function createLamp(mainMaterial, light) {
       pivot.rotation.z = tilt.y;
 
       bulbMat.emissiveIntensity = 0.8 + nightFactor * 2.4;
-      if (light) light.intensity = 0.6 + nightFactor * 5.5;
+      innerGlow.opacity = 0.25 + nightFactor * 0.55;
+      throughGlow.opacity = 0.05 + nightFactor * 0.5;
+      if (light) light.intensity = 0.4 + nightFactor * 2.2;
     },
     dispose() {
       metal.dispose();
       bulbMat.dispose();
+      innerGlow.dispose();
+      throughGlow.dispose();
       // The light itself goes back to the pool (see propsController).
     },
   };
