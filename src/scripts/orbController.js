@@ -105,6 +105,10 @@ const pointer = {
   startTime: 0,
   moved: 0,
 };
+// Touch screens have no right-click: holding a finger still opens the menu.
+const LONG_PRESS_MS = 500;
+let longPressTimer = null;
+let longPressAt = 0;
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const grabPlane = new THREE.Plane();
@@ -522,6 +526,22 @@ export function setupPointerControls() {
     pointer.moved = 0;
     canvas.setPointerCapture(e.pointerId);
 
+    if (e.pointerType !== "mouse") {
+      clearTimeout(longPressTimer);
+      const at = { clientX: e.clientX, clientY: e.clientY };
+      longPressTimer = setTimeout(() => {
+        if (pointer.id === null || pointer.moved > 10) return;
+        // Let go of whatever was grabbed, then show the menu.
+        if (pointer.mode === "prop") endPropDrag(false);
+        if (pointer.mode === "grab") velocity.set(0, 0, 0);
+        pointer.mode = "longpress";
+        longPressAt = performance.now();
+        renderer.domElement.classList.remove("is-grabbing");
+        navigator.vibrate?.(15);
+        openMenuAt(at);
+      }, LONG_PRESS_MS);
+    }
+
     setNdc(e);
     // Slightly generous hit area so it's easy to grab on a phone.
     const hit = raycaster.intersectObject(activeOrb, true)[0];
@@ -582,6 +602,7 @@ export function setupPointerControls() {
 
   const end = (e) => {
     if (e.pointerId !== pointer.id) return;
+    clearTimeout(longPressTimer);
     const duration = e.timeStamp - pointer.startTime;
     const isTap = pointer.moved < 8 && duration < 350;
 
@@ -620,18 +641,24 @@ export function setupPointerControls() {
   // click/tap is always just for playing with the orb.
   canvas.addEventListener("contextmenu", (e) => {
     e.preventDefault();
-    // Right-click a kitty / lamp / yoyo to recolor it.
-    setNdc(e);
-    const propHit = pickProp(raycaster);
-    const orbHit = raycaster.intersectObject(activeOrb, true)[0];
-    if (propHit && (!orbHit || propHit.distance < orbHit.distance)) {
-      closeRadial();
-      colorTarget = propHit.prop;
-      colorPickerController?.open(propLabel(propHit.prop));
-      return;
-    }
-    openRadial();
+    // Phones that fire their own long-press menu: we already handled it.
+    if (performance.now() - longPressAt < 800) return;
+    openMenuAt(e);
   });
+}
+
+// Right-click (or long-press): an item → its color picker; otherwise the orb menu.
+function openMenuAt(e) {
+  setNdc(e);
+  const propHit = pickProp(raycaster);
+  const orbHit = raycaster.intersectObject(activeOrb, true)[0];
+  if (propHit && (!orbHit || propHit.distance < orbHit.distance)) {
+    closeRadial();
+    colorTarget = propHit.prop;
+    colorPickerController?.open(propLabel(propHit.prop));
+    return;
+  }
+  openRadial();
 }
 
 // ---------- radial menu ----------

@@ -51,10 +51,17 @@ setupPhysicsModal();
 setupProps({ toast: showToast, getOrbPosition });
 setupHelpCard();
 
-// One-time hint for keyboard users.
-if (window.matchMedia("(pointer: fine)").matches) {
-  setTimeout(() => showToast("arrows drive · space jumps · letter keys drop stuff in · ? for the list", 5000), 1200);
-}
+// One-time hint.
+setTimeout(
+  () =>
+    showToast(
+      window.matchMedia("(pointer: coarse)").matches
+        ? "tap + to add stuff · hold the orb for its menu"
+        : "arrows drive · space jumps · + or letter keys add stuff",
+      5000,
+    ),
+  1200,
+);
 
 const timer = new THREE.Timer();
 timer.connect(document); // pauses cleanly when the tab is hidden

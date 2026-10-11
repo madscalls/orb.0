@@ -96,8 +96,9 @@ body.is-night .nav__search::placeholder {
 
 .nav__help {
   font-family: system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 700;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .nav__trash:active {
